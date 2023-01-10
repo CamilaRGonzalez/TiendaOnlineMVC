@@ -1,0 +1,263 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/layoutCliente.cshtml";
+}
+
+<!-- Header-->
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">Compra con estilo</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Encuentra los mejores productos</p>
+        </div>
+    </div>
+</header>
+<!-- Section-->
+<section>
+    <div class="container-fluid px-5 my-5">
+        <div class="row">
+            <div class="col-sm-3">
+                <!-- Categorias-->
+                <div class="row mb-3">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-header bg-dark text-white">
+                                Categorias
+                            </div>
+                            <div id="contenedor_categoria" class="card-body">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marcas-->
+                <div class="row mb-3">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-header bg-dark text-white">
+                                Marcas
+                            </div>
+                            <div id="contenedor_marca" class="card-body">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-12">
+                        <div class="d-grid gap-2">
+                            <button id="btnaplicarfiltro" class="btn btn-outline-dark btn-block" type="button">
+                                <i class="fas fa-filter"></i>Aplicar Filtros
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+            <div class="col-sm-9">
+                <div id="contenedor_producto" class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+                    
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+@section scripts{
+    
+    <script>
+    //cuando se cargue la pagina
+    $(document).ready(function () {
+        MostrarCategorias();
+        MostrarProductos(0, 0)
+    })
+
+
+    //cuando se cambie la categoria vuelve a mostrar las marcas correspondientes
+    $(document).on("change", "input[name=categoria]", function () {
+        MostrarMarca();
+
+    })
+
+    //cuando se aprete el boton aplicar filtro se vuelven a listar los productos
+    $("#btnaplicarfiltro").click(function () {
+
+        var _idcategoria = $("input[name=categoria]:checked").val()
+        var _idmarca = $("input[name=marca]:checked").val()
+        MostrarProductos(_idcategoria, _idmarca)
+
+    })
+
+    $(document).on('click', '.agregarcarrito', function () {
+        var idProducto = $(this).data('idproducto');
+        jQuery.ajax({
+            url:"@Url.Action("AgregarCarrito", "Tienda")",
+            type: "POST",
+            data: JSON.stringify({ IdProducto: idProducto }),
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                if (response.resultado == 1) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Agregado al carrito!',
+                    })
+                }
+                else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'El producto ya está en el carrito!',
+                    })
+                }
+                
+            }
+        })
+    });
+
+
+
+    //obtiene las categorias mediante GET y las adjunta dinamicamente como form-checks al div contenedor-categorias
+    function MostrarCategorias() {
+        jQuery.ajax({
+            url:"@Url.Action("MostrarCategorias", "Tienda")",
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+
+                //agrega el primero que va a decir todos
+                $("<div>").addClass("form-check").append(
+
+                    $("<input>").addClass("form-check-input").attr({ "type": "radio", "name": "categoria", "value": "0", "id": "cx", "checked": "checked" }),
+                    $("<label>").addClass("form-check-label").text("Todos").attr({ "for": "cx"})
+                ).appendTo("#contenedor_categoria")
+
+
+                //agrega los demas a partir de la lista recibida
+                $.each(response.data, function (i, element) {
+
+                    $("<div>").addClass("form-check").append(
+                        $("<input>").addClass("form-check-input").attr({ "type": "radio", "name": "categoria", "value": element.IdCategoria, "id": "c" + i}),
+                        $("<label>").addClass("form-check-label").text(element.Descripcion).attr({ "for": "c" + i})
+                    ).appendTo("#contenedor_categoria")
+
+                })
+
+                //si no llamo acá no carga al cargar la pagina
+                MostrarMarca();
+
+            }
+        })
+
+    }
+
+    //Obtiene las marcas segun la categoria (post) y recibe lista con las marcas
+    function MostrarMarca() {
+
+        //obtiene value del inut chequeado
+        var _idcategoria = $("input[name=categoria]:checked").val()
+
+        jQuery.ajax({
+            url:"@Url.Action("MostrarMarcas", "Tienda")",
+            type: "POST",
+            data: JSON.stringify({ categoria: _idcategoria}), //pasa el parametro categoria
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                //vacia las marcas para que no se superpongan si se llama varias veces
+                $("#contenedor_marca").html("");
+
+                $("<div>").addClass("form-check").append(
+
+                    $("<input>").addClass("form-check-input").attr({ "type": "radio", "name": "marca", "value": "0", "id": "mx", "checked": "checked" }),
+                    $("<label>").addClass("form-check-label").text("Todos").attr({ "for": "mx"})
+                ).appendTo("#contenedor_marca")
+
+                var contenedor_marca = document.querySelector("#contenedor_marca");
+
+                $.each(response.data, function (i, element) {
+                    //sin jquery
+                    var formCheck = '<div class="form-check">' +
+                        '<input class="form-check-input" type="radio" name="marca" value= ' + element.IdMarca + ' id="m"' + i + '   /> ' +
+                        '<label class= "form-check-label" for="m"' + i + '>' + element.Descripcion + '</label>' +
+                        '<div/> ';
+                    contenedor_marca.insertAdjacentHTML("beforeend", formCheck);
+
+                    /* //con jquery
+                    $("<div>").addClass("form-check").append(
+                        $("<input>").addClass("form-check-input").attr({ "type": "radio", "name": "marca", "value": element.IdMarca, "id": "m" + i}),
+                        $("<label>").addClass("form-check-label").text(element.Descripcion).attr({ "for": "m" + i})
+                    ).appendTo("#contenedor_marca")*/
+
+                })
+
+            }
+        })
+
+    }
+
+    const formatter = new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        minimumFractionDigits: 2
+    })
+
+    //listar productos
+    function MostrarProductos(_idcategoria,_idmarca) {
+        jQuery.ajax({
+            url:"@Url.Action("MostrarProductos", "Tienda")",
+            type: "POST",
+            data: JSON.stringify({ categoria: _idcategoria, marca: _idmarca}),
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                //limpiar productos para que no se repitan
+                $("#contenedor_producto").html("");
+
+
+                $.each(response.data, function (i, element) {
+                    $("<div>").addClass("col mb-5").append(
+                        $("<div>").addClass("card h-100").append(
+                            $("<img>").addClass("card-img-top").attr({ "src": element.UrlImagen}),
+                            $("<div>").addClass("card-body p-4").append(
+                                $("<div>").addClass("text-center").append(
+                                    $("<h5>").addClass("fw-bolder").text(element.Nombre),
+                                    "" + formatter.format(element.Precio) + " ARS"
+                                )
+                            ),
+                                $("<div>").addClass("card-footer p-2 pt-0 border-top-0 bg-transparent").append(
+                                    $("<div>").addClass("d-grid gap-2").append(
+                                        //Si esta la sesion iniciada lo puede agregar al carrito
+                                        @if (Session["Usuario"] != null) {
+
+                                            @:$("<button>").addClass("btn btn-success mt-auto agregarcarrito").data("idproducto", element.IdProducto).text("Agregar a carrito"),
+
+                                        }
+                                        $("<a>").addClass("btn btn-dark mt-auto")
+                                            .attr({"href":"@Url.Action("DetalleProducto","Tienda")" + "?IdProducto=" + element.IdProducto})
+                                            .text("Ver detalle")
+                                    )
+                                )
+                        )
+                    ).appendTo("#contenedor_producto") //agregar todo al div contenedor_producto
+                })
+
+            }
+        })
+    }
+
+
+    </script>
+    
+                     
+}
+

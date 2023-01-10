@@ -1,0 +1,217 @@
+﻿
+@{
+    ViewBag.Title = "Categoria";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<ol class="breadcrumb mb-4 mt-4">
+    <li class="breadcrumb-item"> <a href="#">Mantenimiento</a></li>
+    <li class="breadcrumb-item">Categorías</li>
+</ol>
+
+<!-- Lista -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-table me-1"></i> Lista de categorías
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <!-- Nuevo Usuario -->
+                <button onclick="abrirVentana()" type="button" class="btn btn-success">Crear Nueva</button>
+            </div>
+        </div>
+        <hr />
+
+        <table id="tabla" class="display cell-border" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>Activo</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="ventanaModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Nuevo Usuario</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body ">
+                <div class="row g-2">
+                    <div class="col-sm-6">
+                        <label for="txtNombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="txtNombre" placeholder="Nombre">
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label class="form-label">Activo</label>
+                        <select class="form-select" id="ddlActivo" aria-label="Default select example">
+                            <option value="1">Si</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mt-1">
+                    <div class="col-sm-12">
+                        <div class="d-none alert alert-danger" role="alert" id="msjError">
+                            A simple danger alert—check it out!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardar()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section scripts{
+    <script>
+        let tableData;
+        let filaSeleccionada;
+        let idCateg;
+        let msjError;
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //DIBUJAR TABLA CON USUARIOS
+        tableData = $("#tabla").DataTable({
+            responsive: true,
+            ordering: false,
+            "ajax": {
+                url: '@Url.Action("ListarCategorias","Mantenimiento")',
+                type: "GET",
+                dataType:"json"
+            },
+            "columns": [
+                { "data": "Descripcion" },
+                {
+                    "data": "Activo", "render": (valor) => {
+                        if (valor)
+                            return '<span class="badge bg-success">Si</span>'
+                        else
+                            return '<span class="badge bg-danger">No</span>'
+                    }
+                },
+                {
+                    "defaultContent": '<button type="button" class="btn btn-primary btn-sm btn-editar"><i class="fas fa-pen"></i> </button>',
+                    "orderable": false,
+                    "searchable": false,
+                    "width": "90px"
+                }
+            ]
+        });
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //ABRIR VENTANA DATOS CATEGORIA
+        function abrirVentana(json) {
+            //Ocultar mensaje de error
+            msjError = document.getElementById("msjError");
+            msjError.classList.add("d-none");
+            msjError.classList.remove("d-line");
+
+            if (json != null) {
+                //si ya existe se rellenan los campos con los datos recibidos
+                document.querySelector(".modal-title").textContent = "Categoría";
+                document.querySelector("#txtNombre").value = json.Descripcion;
+                if (json.Activo)
+                    document.querySelector("#ddlActivo").value = 1;
+                else
+                    document.querySelector("#ddlActivo").value = 0;
+            }
+            else {
+                //si es nuevo usuario los campos van vacios y el id se pone en 0
+                idCateg = 0;
+                document.querySelector(".modal-title").textContent = "Nueva categoría";
+                document.querySelector("#txtNombre").value = "";
+            }
+
+            //muestra la ventana emergente para editar/dar de alta al usuario
+            var myModal = new bootstrap.Modal(document.getElementById('ventanaModal'))
+            myModal.show()
+        }
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //CUANDO SE HAGA CLIC EN EL BOTON EDITAR
+        $("#tabla tbody").on("click", ".btn-editar", function () {
+
+            filaSeleccionada = $(this).closest("tr"); //selecciona la fila de la tabla
+            let datos = tableData.row(filaSeleccionada).data(); //se guarda la data de la fila seleccionada
+            idCateg = datos.IdCategoria;//se guarda globalmente el id para indicar que es existente
+
+            abrirVentana(datos);
+        })
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //GUARDAR O MODIFICAR CATEGORIA
+        function guardar()
+        {
+            //se guarda en variable un json con los datos de la categoria
+            let Categoria = {
+                IdCategoria: idCateg,
+                Activo: document.querySelector("#ddlActivo").value == 1 ? true : false,
+                Descripcion: document.querySelector("#txtNombre").value
+            }
+
+            //peticion ajax para enviar la info a la base de datos
+            jQuery.ajax({
+                url: '@Url.Action("RegistrarCategoria","Mantenimiento")',
+                type: "POST",
+                data: JSON.stringify({ categ: Categoria }), //Se envia el json Categoria como parametro al controlador(categ es la variable que recibe la funcion del controlador)
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                //cuando se resuelva la peticion... (data= respuesta de la peticion (retorno de la funcion del controlador))
+                success: function (data) {
+                    if (idCateg == 0) {
+                        if (data.resultado != 0) {
+                            Categoria.IdCategoria = data.resultado; //actualizo el id del usuario en la tabla para q no quede en 0
+                            tableData.row.add(Categoria).draw(false); //agrega nueva fila a la tabla con la info Uduario
+                            $('#ventanaModal').modal('hide');
+                        }
+                        else {
+                            msjError.textContent = data.mensaje;
+                            msjError.classList.remove("d-none");
+                            msjError.classList.add("d-line");
+                        }
+
+                    }
+                    else {
+                        if (data.resultado != 0) {
+                            $('#ventanaModal').modal('hide');
+                            tableData.row(filaSeleccionada).data(Categoria).draw(false); //edita fila de la tabla con la nueva info (Usuario)
+                        }
+                        else {
+                            msjError.textContent = data.mensaje;
+                            msjError.classList.remove("d-none");
+                            msjError.classList.add("d-line");
+                        }
+                    }
+                },
+                error: function (error) {
+                    console.log(error);
+                },
+                beforeSend: function () {
+
+                }
+            });
+
+        }
+
+    </script>
+}
+

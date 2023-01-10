@@ -1,0 +1,111 @@
+﻿
+@{
+    ViewBag.Title = "Pedidos";
+    Layout = "~/Views/Shared/layoutCliente.cshtml";
+}
+
+<section style="margin-bottom:auto;">
+    <!-- Lista -->
+    <div class="card m-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <h3>Pedidos</h3>
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="table-responsive">
+                <table id="tabla" class="display cell-border" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Código Transacción</th>
+                            <th>Fecha</th>
+                            <th>Total Productos</th>
+                            <th>Monto</th>
+                            <th>Detalle Pedido</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBody">
+                        <!--<tr>
+                    <th scope="row">1</th>
+                    <td>Mark</td>
+                    <td>Otto</td>
+                    <td></td>
+                </tr>-->
+                    </tbody>
+                </table>
+            </div>         
+        </div>
+    </div>
+</section>
+
+
+
+@section scripts{
+   
+    <script>
+
+        $(document).ready(function () {
+            dibujarTabla();
+        })
+        /*
+        $(document).on('click', '.btn-detalle', function () {
+            var idpedido = $(this).data('pedidoid');
+            jQuery.ajax({
+                url:"Url.Action("ObtenerParametro", "ListaPedidos")",
+                type: "POST",
+                data: JSON.stringify({ IdPedido: idpedido}),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
+                }
+            })
+        });*/
+
+        const formatter = new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            minimumFractionDigits: 2
+        })
+
+        function dibujarTabla() {
+            jQuery.ajax({
+                url: '@Url.Action("ListarPedidos", "ListaPedidos")',
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+
+                    $("#tablaBody").html("");
+
+                    var tablaBody = document.querySelector("#tablaBody");
+
+                    $.each(response.data, function (i, element) {
+                        var str = '@Url.Action("Detalle","ListaPedidos")' + "?idPedido=" +element.IdPedido
+
+                        var row ='<tr>'+
+                            '<td>' + element.IdTransaccion + '</td>' +
+                            '<td>' + element.strFechaVenta + '</td>' +
+                            '<td>' + element.TotalProductos + '</td>' +
+                            '<td>' + formatter.format(element.MontoTotal) + '</td>' +
+                            '<td>' +
+                            '<a class="btn btn-link" href="'+str+'">Detalle</a>'+
+                            //' <button class="btn btn-link btn-detalle" data-pedidoid="' + element.IdPedido + '" > Detalle</button>' +
+                            '</td> ' +
+                            '</tr>';
+
+                        tablaBody.insertAdjacentHTML("beforeend", row);
+
+                    })
+                }
+            });
+        }
+
+    </script>  
+        
+
+
+
+
+}

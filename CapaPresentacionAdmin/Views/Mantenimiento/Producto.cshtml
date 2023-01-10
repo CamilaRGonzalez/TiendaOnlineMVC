@@ -1,0 +1,495 @@
+﻿
+@{
+    ViewBag.Title = "Producto";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<ol class="breadcrumb mb-4 mt-4">
+    <li class="breadcrumb-item"> <a href="#">Mantenimiento</a></li>
+    <li class="breadcrumb-item">Productos</li>
+</ol>
+
+<!-- Lista -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-boxes me-1"></i> Lista de Marcas
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <!-- Nuevo Usuario -->
+                <button onclick="abrirVentana()" type="button" class="btn btn-success">Crear Nueva</button>
+            </div>
+        </div>
+        <hr />
+
+        <table id="tabla" class="display cell-border" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Marca</th>
+                    <th>Categoria</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Activo</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="ventanaModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Nuevo Producto</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body ">
+
+                <form class="row">
+                    <div class="col-sm-3">
+                        <div class="mb-2">
+                            <img id="imgProducto" height="197" width="200" class="border rounded mx-auto d-block img-fluid" />
+                        </div>
+                        <div class="mb-2">
+                            <input onchange="mostrarImagen(this)" type="file" id="fileProd" class="form-control" accept="image/jpg, image/png, image/jpeg" />
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="mb-2">
+                            <label class="form-label">Nombre</label>
+                            <input class="form-control" id="txtNombre" name="nombre" type="text" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Descripcion</label>
+                            <textarea class="form-control" id="txtDesc" name="Descripcion" type="text" style="height:125px;resize:none;">  </textarea>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="mb-2">
+                            <label class="form-label">Marca</label>
+                            <select id="ddlMarca" class="form-select">
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Categoría</label>
+                            <select id="ddlCateg" class="form-select">
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Precio</label>
+                            <input class="form-control" id="txtPrecio" name="precio" type="text" />
+                            <label class="form-label d-none" id="lblPrecio">Formato Incorrecto, debe ser de tipo: ##.##</label>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="mb-2">
+                            <label class="form-label">Stock</label>
+                            <input class="form-control" id="txtStock" name="stock" type="number" />
+                            <label class="form-label d-none" id="lblStock">Sólo números enteros</label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Activo</label>
+                            <select class="form-select" id="ddlActivo" aria-label="Default select example">
+                                <option value="1">Si</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </form>
+
+                <div class="row mt-1">
+                    <div class="col-sm-12">
+                        <div class="d-none alert alert-danger" role="alert" id="msjError">
+                            A simple danger alert—check it out!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardar()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section scripts{
+    <script>
+        let tableData;
+        let filaSeleccionada;
+        let idProd;
+        let msjError;
+        let elementosDOM = ["#txtNombre","#txtDesc","#txtPrecio","#txtStock"];
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //Mostrar Imagen que se carga desde la pc en el input
+
+        function mostrarImagen(input){
+            if (input.files) {
+                var lector = new FileReader();
+
+                lector.onload = (e) => {
+                    $("#imgProducto").attr("src", e.target.result).width(200).height(197);
+                }
+
+                lector.readAsDataURL(input.files[0]);
+            }
+        }
+
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //DIBUJAR TABLA CON USUARIOS
+        tableData = $("#tabla").DataTable({
+            responsive: true,
+            ordering: false,
+            "ajax": {
+                url: '@Url.Action("ListarProductos","Mantenimiento")',
+                type: "GET",
+                dataType:"json"
+            },
+            "columns": [
+                { "data": "Nombre" },
+                { "data": "Descripcion" },
+                { "data": "Marca.Descripcion" },
+                { "data": "Categoria.Descripcion" },
+                { "data": "Precio", 'render': $.fn.dataTable.render.number(',', '.', 2, '$') },
+                { "data": "Stock" },
+                {
+                    "data": "Activo", "render": (valor) => {
+                        if (valor)
+                            return '<span class="badge bg-success">Si</span>'
+                        else
+                            return '<span class="badge bg-danger">No</span>'
+                    }
+                },
+                {
+                    "defaultContent": '<button type="button" class="btn btn-primary btn-sm btn-editar"><i class="fas fa-pen"></i> </button>',
+                    "orderable": false,
+                    "searchable": false,
+                    "width": "90px"
+                }
+            ]
+        });
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //ABRIR VENTANA
+        function abrirVentana(json) {
+
+            //Ocultar mensaje de error
+            msjError = document.getElementById("msjError");
+            msjError.classList.add("d-none");
+            msjError.classList.remove("d-line");
+
+            //limpiar desplegables
+            $('#ddlCateg').empty();
+            $('#ddlMarca').empty();
+
+
+            //limpiar rebordes de campos y labels
+            elementosDOM.forEach((elemento) => {
+                seleccionado = document.querySelector(elemento);
+                seleccionado.classList.remove("is-valid");
+                seleccionado.classList.remove("is-invalid");
+            })
+            document.querySelector("#lblStock").classList.add("d-none");
+            document.querySelector("#lblStock").classList.remove("d-line");
+            document.querySelector("#lblPrecio").classList.add("d-none");
+            document.querySelector("#lblPrecio").classList.remove("d-line");
+
+            jQuery.ajax({
+                    url: '@Url.Action("ListarMarcas","Mantenimiento")',
+                    type: "GET",
+                    dataType: "json",
+                    //contentType: "application/json; charset=utf-8",
+                    //cuando se resuelva la peticion... (data= respuesta de la peticion (retorno de la funcion del controlador))
+                    success: function (data) {
+                        adjuntarOpciones("ddlMarca", data,json)
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+            });
+
+            jQuery.ajax({
+                    url: '@Url.Action("ListarCategorias","Mantenimiento")',
+                    type: "GET",
+                    dataType: "json",
+                    //contentType: "application/json; charset=utf-8",
+                    //cuando se resuelva la peticion... (data= respuesta de la peticion (retorno de la funcion del controlador))
+                    success: function (data) {
+                        adjuntarOpciones("ddlCateg", data,json)
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+            });
+
+            if (json != null) {
+                //si ya existe se rellenan los campos con los datos recibidos
+                document.querySelector(".modal-title").textContent = "Producto";
+                document.querySelector("#txtNombre").value = json.Nombre;
+                document.querySelector("#txtDesc").value = json.Descripcion;
+                document.querySelector("#txtPrecio").value = json.Precio;
+                document.querySelector("#txtStock").value = json.Stock;
+                document.querySelector("#imgProducto").src = "";
+                
+
+                if (json.Activo)
+                    document.querySelector("#ddlActivo").value = 1;
+                else
+                    document.querySelector("#ddlActivo").value = 0;
+
+                jQuery.ajax({
+                    url: '@Url.Action("ImagenProducto", "Mantenimiento")',
+                    type: "POST",
+                     data: JSON.stringify({ id : json.IdProducto}),
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                     success: function (data) {
+                        if (data.conversion) {
+                            $("#imgProducto").attr({ "src": "data:image/" + data.extension + ";base64," + data.textobase64 });
+                        }
+                    },
+                    error: function (error) {
+                        $("#msjError").show();
+                        $("#msjError").text("Error al mostrar imagen");
+
+                    },
+                    beforeSend: function () {
+
+                    },
+                });
+
+            }
+            else {
+                //si es nuevo usuario los campos van vacios y el id se pone en 0
+                idProd = 0;
+                document.querySelector(".modal-title").textContent = "Nuevo Producto";
+                document.querySelector("#txtNombre").value = "";
+                document.querySelector("#txtDesc").value = "";
+                document.querySelector("#txtPrecio").value = "";
+                document.querySelector("#txtStock").value = "";
+                document.querySelector("#imgProducto").src = "";
+            }
+
+            //muestra la ventana emergente para editar/dar de alta al usuario
+            var myModal = new bootstrap.Modal(document.getElementById('ventanaModal'))
+            myModal.show()
+            if (json != null) {
+                document.querySelector("#ddlCateg").value = json.Categoria.IdCategoria;
+                document.querySelector("#ddlMarca").value = json.Marca.IdMarca;
+            }
+
+        }
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //CUANDO SE HAGA CLIC EN EL BOTON EDITAR
+        $("#tabla tbody").on("click", ".btn-editar", function () {
+
+            filaSeleccionada = $(this).closest("tr"); //selecciona la fila de la tabla
+            let datos = tableData.row(filaSeleccionada).data(); //se guarda la data de la fila seleccionada
+            idProd = datos.IdProducto;//se guarda globalmente el id para indicar que es existente
+
+            abrirVentana(datos);
+        })
+
+        //INSERTAR OPCIONES AL DESPLEGABLE FUNCION
+        function adjuntarOpciones(ddlnombre,datos,json) {
+            var select = document.getElementById(ddlnombre);
+            var mOptions = "";
+            var id;
+            var jsonId;
+            var str;
+            var descripcion;
+            var selector = "#" + ddlnombre
+
+
+            var algo = Object.values(datos);//convertir objeto en array
+            for (var i in algo[0]) { //iterar array (en este caso es una matriz de una sola fila, por eso algo[0])
+                if (ddlnombre == "ddlMarca") {
+                    if (json != null)
+                        jsonId = json.Marca.IdMarca;
+                    id = algo[0][i].IdMarca;
+                }
+                else {
+                    if (json != null)
+                        jsonId = json.Categoria.IdCategoria;
+                    id = algo[0][i].IdCategoria;
+                }
+                descripcion = algo[0][i].Descripcion;
+
+                if (json != null && jsonId == id)//si es un producto existente se selecciona el id correspondiente
+                    str = '<option value="' + id + '" selected="selected">' + descripcion + '</option>'
+                else
+                    str = '<option value="' + id + '">' + descripcion + '</option>'
+
+                $(selector).append($(str));
+            }
+
+        }
+
+
+        //---------------------------------------------------------------------------------------------------------\\
+        //GUARDAR O MODIFICAR CATEGORIA
+        function guardar() {
+            
+            //validar campos en front
+            let inputIncorrecto = false;
+            if (validarVacio(elementosDOM))
+                inputIncorrecto = true;
+            if (validarNumeros("#txtPrecio", "#lblPrecio"))
+                inputIncorrecto = true;
+            if (validarNumeros("#txtStock", "#lblStock"))
+                inputIncorrecto = true;
+
+            if (inputIncorrecto)
+                return;
+
+            
+            //se guarda en variable un json con los datos de la categoria
+            let Producto = {
+                IdProducto: idProd,
+                Activo: document.querySelector("#ddlActivo").value == 1 ? true : false,
+                Descripcion: document.querySelector("#txtDesc").value,
+                Nombre: document.querySelector("#txtNombre").value,
+                Precio: document.querySelector("#txtPrecio").value,
+                Stock: document.querySelector("#txtStock").value,
+                Marca: {
+                    IdMarca: $("#ddlMarca option:selected").val(),
+                    Descripcion: $("#ddlMarca option:selected").text()
+                },
+                Categoria: {
+                    IdCategoria: $("#ddlCateg option:selected").val(),
+                    Descripcion: $("#ddlCateg option:selected").text()
+                },
+                strPrecio: document.querySelector("#txtPrecio").value,
+                strStock: document.querySelector("#txtStock").value,
+            }
+
+            if (isNaN(Producto.Precio))
+                Producto.Precio = "0";
+            if (isNaN(Producto.Stock))
+                Producto.Stock = "0";
+                          
+            var imagenSeleccionada = $("#fileProd")[0].files[0];
+            var request = new FormData();
+            request.append("producto", JSON.stringify(Producto));
+            request.append("fileImagen", imagenSeleccionada)
+
+            //peticion ajax para enviar la info a la base de datos
+            jQuery.ajax({
+                url: '@Url.Action("RegistrarProducto","Mantenimiento")',
+                type: "POST",
+                data: request, //Se envia el json Categoria como parametro al controlador(categ es la variable que recibe la funcion del controlador)
+                processData: false,
+                cache: false,
+                contentType: false,
+                //cuando se resuelva la peticion... (data= respuesta de la peticion (retorno de la funcion del controlador))
+                success: function (data) {
+                    
+                    if (data.resultado == 0) {
+                        if (data.mensaje != "false") {
+                            msjError.textContent = data.mensaje;
+                            msjError.classList.remove("d-none");
+                            msjError.classList.add("d-line");
+                        }
+                        return
+                    }
+                    
+                    if (idProd == 0) {
+                        Producto.IdProducto = data.resultado; //actualizo el id del usuario en la tabla para q no quede en 0
+                        tableData.row.add(Producto).draw(false); //agrega nueva fila a la tabla con la info Uduario
+                        $('#ventanaModal').modal('hide');
+                    }
+                    else {
+                        $('#ventanaModal').modal('hide');
+                        tableData.row(filaSeleccionada).data(Producto).draw(false); //edita fila de la tabla con la nueva info (Usuario)                      
+                    }
+                    
+                    
+                },
+                error: function (error) {
+                    console.log(error);
+                },
+                beforeSend: function () {
+
+                }
+            });
+        }
+
+
+        //----------------------------------------------------------------------------------------------------------\\
+        // VALIDACIONES
+        function validarVacio(elementos) {
+
+            msjError = document.getElementById("msjError");
+            let vacios = false;
+
+            elementos.forEach((elemento) => {
+                seleccionado = document.querySelector(elemento);
+                if (seleccionado.value == "") {
+                    seleccionado.classList.remove("is-valid");
+                    seleccionado.classList.add("is-invalid");   
+                    vacios = true;
+                }
+                else {
+                    seleccionado.classList.add("is-valid");
+                    seleccionado.classList.remove("is-invalid");
+                }
+
+                if (vacios) {
+                    msjError.textContent = "No puede haber campos vacíos";
+                    msjError.classList.remove("d-none");
+                    msjError.classList.add("d-line");
+                    
+                }
+                else {
+                    msjError.classList.add("d-none");
+                    msjError.classList.remove("d-line");
+                   
+                }                
+            })
+            return vacios;
+        }
+
+        function validarNumeros(elemento,label) {
+            element = document.querySelector(elemento);
+            let incorrecto = false;
+            
+            if (isNaN(element.value) || element.value == "") {
+                element.classList.remove("is-valid");
+                element.classList.add("is-invalid");
+                document.querySelector(label).classList.remove("d-none");
+                document.querySelector(label).classList.add("d-line");
+                incorrecto = true;
+            }
+            else {
+                element.classList.add("is-valid");
+                element.classList.remove("is-invalid");
+                document.querySelector(label).classList.add("d-none");
+                document.querySelector(label).classList.remove("d-line");
+            }
+            return incorrecto;
+        }
+
+
+    </script>
+}
+

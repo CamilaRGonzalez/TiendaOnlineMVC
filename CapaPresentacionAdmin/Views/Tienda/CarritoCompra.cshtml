@@ -1,0 +1,245 @@
+﻿
+@{
+    ViewBag.Title = "CarritoCompra";
+    Layout = "~/Views/Shared/layoutCliente.cshtml";
+}
+
+<section style="margin-bottom:auto;">
+
+    <div class="m-5">
+        <div class="m-5">
+
+            <div class="col">
+                <div class="me-2">
+                    <div class=" d-flex justify-content-between">
+                        <h5 class="ms-2 mt-2">Detalle Carrito</h5>
+                        <a href="@Url.Action("Index","Tienda")" class="btn btn-primary"><i class="fas fa-cart-plus"></i> Seguir Comprando</a>
+                    </div>
+
+                    <hr class="mt-2 mb-2" />
+
+                    <!--Contenedor de los productos-->
+                    <div id="productosCarrito">
+                        <!--
+                        <div class="card mb-2 card-producto">
+                            <div class="card-body">
+                                <div class="row">
+
+                                    <div class="col-sm-2 align-self-center d-flex justify-content-center">
+                                        <img src="data:image/png;base64,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" style="width:100px; height:100px;" />
+                                    </div>
+
+                                    <div class="col-sm-4 align-self-center">
+                                        <span class="font-wight-bold d-block">Marca</span>
+                                        <span> Nombre de producto</span>
+                                    </div>
+
+                                    <div class="col-sm-2 align-self-center">
+                                        <span> Precio: $1200,4</span>
+                                    </div>
+
+                                    <div class="col-sm-2 align-self-center">
+                                        <div class="d-flex">
+                                            <button class="btn btn-outline-secondary btn-restar rounded-0">
+                                                <i class="fas fa-minus"> </i>
+                                            </button>
+                                            <input disabled class="form-control input-cantidad p-1 text-center rounded-0" style="width: 40px" />
+                                            <button class="btn btn-outline-secondary btn-sumar rounded-0">
+                                                <i class="fas fa-plus"> </i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-2 align-self-center">
+                                        <button class="btn btn-outline-danger btn-eliminar">
+                                            <i class="fas fa-trash-alt"> </i> Eliminar
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>  -->
+
+                    </div>
+
+
+                    <div class="card mb-2 card-producto" id="RowTotales">
+                        <div class="card-body">
+                            <div class="row">
+
+                                <div class="col align-self-center">
+                                    <h5>Productos </h5>
+                                </div>
+
+                                <div class="col align-self-center">
+                                    <h5 id="Total"> </h5>
+                                </div>
+
+                                <div class="col align-self-center">
+                                    <h5>Total </h5>
+                                </div>
+
+                                <div class="col align-self-center">
+                                    <h5 id="PrecioTotal"> </h5>
+                                </div>
+
+                                <div class="col align-self-center">
+                                    <div class="d-flex">
+                                        <button class="btn btn-outline-success btn-comprar rounded-0">
+                                            Hacer Pedido
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+</section>
+
+
+
+@section scripts{
+    <script>
+        let tableData;
+
+        $(document).ready(function () {
+            MostrarCarrito();
+        })
+
+
+        $(document).on('click', '.btn-sumar', function () {
+            var idProducto = $(this).data('productoid');
+            jQuery.ajax({
+                url:"@Url.Action("ModificarCantidad", "Tienda")",
+                type: "POST",
+                data: JSON.stringify({ IdProducto: idProducto, modo:"sumar" }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
+                    MostrarCarrito();
+                }
+            })
+        });
+
+        $(document).on('click', '.btn-comprar', function () {
+            jQuery.ajax({
+                url: '@Url.Action("RealizarPedido", "Tienda")',
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    MostrarCarrito();
+                }
+            })
+        });
+
+
+        $(document).on('click', '.btn-restar', function () {
+            var idProducto = $(this).data('productoid');
+            jQuery.ajax({
+                url:"@Url.Action("ModificarCantidad", "Tienda")",
+                type: "POST",
+                data: JSON.stringify({ IdProducto: idProducto, modo:"restar" }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
+                    MostrarCarrito();
+                }
+            })
+        });
+
+        $(document).on('click', '.btn-eliminar', function () {
+            var idProducto = $(this).data('productoid');
+            jQuery.ajax({
+                url:"@Url.Action("EliminarDelCarrito", "Tienda")",
+                type: "POST",
+                data: JSON.stringify({ IdProducto: idProducto }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
+                    MostrarCarrito();
+                }
+            })
+        });
+
+        function MostrarCarrito() {
+            jQuery.ajax({
+                url: '@Url.Action("ObtenerCarrito","Tienda")',
+                type: "GET",
+                dataType: "json",
+                success: function (data) {
+
+                    $("#productosCarrito").html("");
+                    document.querySelector("#Total").textContent = data.total;
+                    document.querySelector("#PrecioTotal").textContent = formatter.format(data.monto);
+
+                    var contenedorProducto = document.querySelector("#productosCarrito");
+
+                    if (data.resultado == 0)
+                        document.querySelector("#RowTotales").classList.add("d-none")
+                    else
+                        document.querySelector("#RowTotales").classList.remove("d-none")
+
+
+                    $.each(data.data, function (i, element) {
+                        var filaCompra = '<div class="card mb-2 card-producto">' +
+                            '<div class="card-body">' +
+                            '<div class="row">' +
+                            '<div class="col-sm-2 align-self-center d-flex justify-content-center">' +
+                            '<img src="' + element.Producto.UrlImagen + '" style="width:100px; height:100px;" />' +
+                            '</div>' +
+
+                            '<div class="col-sm-4 align-self-center">' +
+                            '<span class="font-wight-bold d-block">' + element.Producto.Marca.Descripcion + '</span>' +
+                            '<span>' + element.Producto.Nombre + '</span>' +
+                            '</div>' +
+
+                            '<div class="col-sm-2 align-self-center">' +
+                            '<span> Precio: ' + formatter.format(element.Total) + '</span>' +
+                            '</div>' +
+
+                            '<div class="col-sm-2 align-self-center">' +
+                            '<div class="d-flex">' +
+                            '<button data-productoid="' + element.Producto.IdProducto + '" class="btn btn-outline-secondary btn-restar rounded-0">' +
+                            '<i class="fas fa-minus"> </i>' +
+                            '</button>' +
+                            '<input value="' + element.Cantidad + '" disabled class="form-control input-cantidad p-1 text-center rounded-0" style="width: 40px"/>' +
+                            '<button data-productoid="' + element.Producto.IdProducto + '" class="btn btn-outline-secondary btn-sumar rounded-0">' +
+                            '<i class="fas fa-plus"> </i>' +
+                            '</button>' +
+                            '</div>' +
+                            '</div>' +
+
+                            '<div class="col-sm-2 align-self-center">' +
+                            '<button data-productoid="' + element.Producto.IdProducto + '" class="btn btn-outline-danger btn-eliminar">' +
+                            '<i class="fas fa-trash-alt"> </i> Eliminar' +
+                            '</button>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>'
+
+                        contenedorProducto.insertAdjacentHTML("beforeend", filaCompra);
+
+                    })
+                }
+            });
+        }
+
+        const formatter = new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            minimumFractionDigits: 2
+        })
+
+    </script>
+}
